@@ -2,7 +2,7 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
-const { generateTokens } = require('./auth');
+const { generateToken, generateRefreshToken, verifyRefreshToken,verifyToken } = require('./auth');
 const authMiddleware = require('./middleware/auth')
 require('dotenv').config({path: '../.env'});
 const app = express();
@@ -10,6 +10,7 @@ const port = 3001;
 
 app.use(express.json());
 app.use(cookieParser());
+
 app.use(cors({ credentials: true, origin: '*' }));
 
 const users = [
@@ -29,12 +30,14 @@ app.post('/login', (req, res) => {
   const user = users.find(u => u.username === username && u.password === password);
 
   if (user) {
-    const { accessToken, refreshToken } = generateTokens(user);
+    const accessToken = generateToken(user);
+    const refreshToken = generateRefreshToken(user);
     
     res
-    .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
-    .header('Authorization', accessToken)
-    .send(user);
+  .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
+  .cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'strict' })
+  .send(user);
+
   }
   else{
     res.status(401).json({ message: 'Invalid credentials' });
@@ -42,10 +45,48 @@ app.post('/login', (req, res) => {
 });
 
 
-app.get('/products', authMiddleware, (req, res) => {
-   return res.json(mockProducts);
+app.post('/logout', (req, res) => {
+
+  res.clearCookie('refreshToken');
+  res.clearCookie('accessToken');
+  res.status(200).json('User Logged out')
 });
 
+app.post('/refresh', (req, res) => {
+    const refreshToken = req.cookies['refreshToken'];
+    if (!refreshToken) {
+      return res.status(401).send('Access Denied. No refresh token provided.');
+    }
+  
+    try {
+      const decoded = verifyRefreshToken(refreshToken)
+      const accessToken = generateToken(user)
+  
+      res
+        .header('Authorization', accessToken)
+        .send(decoded.user);
+    } catch (error) {
+      return res.status(400).send('Invalid refresh token.');
+    }
+  });
+
+app.get('/products', authMiddleware, (req, res) => {
+   return res.json(req.user);
+});
+
+
+app.get('/check-auth', (req, res) => {
+    const accessToken = req.cookies.accessToken;
+  
+    // Eğer accessToken varsa ve verifyToken doğru bir şekilde çalışıyorsa
+    if (accessToken && verifyToken(accessToken)) {
+      res.send({ isAuthenticated: true });
+    } else {
+      res.send({ isAuthenticated: false });
+    }
+  });
+  
+ 
   
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

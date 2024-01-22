@@ -1,20 +1,32 @@
 // backend/auth.js
 const jwt = require('jsonwebtoken');
 
-function generateTokens(user) {
-  const accessToken = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '50s' });
-  const refreshToken = jwt.sign({ id: user.id, username: user.username }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
-
-  return { accessToken, refreshToken };
+function generateToken(user) {
+  const accessToken = jwt.sign({user:{ id: user.id, username: user.username }}, process.env.JWT_SECRET, { expiresIn: '5m' });
+  return accessToken
 }
 
+function generateRefreshToken(user) {
+    const refreshToken = jwt.sign({user:{ id: user.id, username: user.username }}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
+    return refreshToken
+  }
 
-function verifyToken(token) {
-  return jwt.verify(token, process.env.JWT_SECRET);
-}
 
-function verifyRefreshToken(refreshToken) {
-  return jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-}
-
-module.exports = { generateTokens, verifyToken, verifyRefreshToken };
+  function verifyToken(token) {
+    try {
+      jwt.verify(token, process.env.JWT_SECRET);
+      return true; // Token doğrulandı
+    } catch (error) {
+      return false; // Token doğrulanamadı
+    }
+  }
+  
+  function verifyRefreshToken(refreshToken) {
+    try {
+      jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+      return true; // Refresh token doğrulandı
+    } catch (error) {
+      return false; // Refresh token doğrulanamadı
+    }
+  }
+module.exports = { generateRefreshToken,generateToken, verifyToken, verifyRefreshToken };
