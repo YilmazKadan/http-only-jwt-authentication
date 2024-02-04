@@ -64,8 +64,6 @@ function App() {
       <Router>
         <CustomLayout>
           <Suspense fallback={<div>Loading</div>}>
-
-         
           <Routes>
             {authenticated && (
               <>

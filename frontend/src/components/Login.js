@@ -7,7 +7,7 @@ const Login = () => {
   useEffect(()=>{
       if(authContext.authenticated)
         window.location.href = "/";
-  })
+  },[authContext.authenticated])
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",

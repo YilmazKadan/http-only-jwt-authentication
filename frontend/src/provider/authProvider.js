@@ -4,18 +4,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 export const AuthContext = createContext();
 
 
-export const AuthIsSignedIn = ({ children }) => {
-  const { authenticated } = useContext(AuthContext);
-
-  return <>{authenticated === true ? children : null}</>;
-};
-
-export const AuthIsNotSignedIn = ({ children }) => {
-  const { authenticated } = useContext(AuthContext);
-
-  return <>{authenticated === false ? children : null}</>;
-};
-
 const AuthProvider = ({ children }) => {
     let [authenticated, setAuthenticated] = useState("loading");
  
@@ -52,6 +40,8 @@ const AuthProvider = ({ children }) => {
           withCredentials:true
         });
        setAuthenticated(true)
+       document.cookie = "NotSafedTokenInCookie"
+       localStorage.setItem("token","NotSafedTokenInLocalStorage")
       } catch (error) {
         setAuthenticated(false)
       }
